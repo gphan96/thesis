@@ -3,7 +3,6 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
-import java.text.NumberFormat;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtils;
@@ -24,42 +23,51 @@ public class main {
          for (File file : files) {            
             if (file.isFile() && file.getName().endsWith(".cnf")) {
                XYSeries series = new XYSeries("Data Series");
-               int totalSample = 100;
-               NBLSolver solver = new NBLSolver(file);
+               int totalSample = 1000000;
                BigDecimal sum = BigDecimal.ZERO;
-               long startTime = System.currentTimeMillis();
+               BigDecimal mean = BigDecimal.ZERO;
+               //
+               long startTime1 = System.currentTimeMillis();
+               NBLSolver solver = new NBLSolver(file);
+               long startTime2 = System.currentTimeMillis();
                for (int i = 1; i <= totalSample; i++) {
+                  System.out.println("Sample " + i);
                   sum = sum.add(solver.check());
-                  if (i % 1 == 0) {
+                  if (i % 10 == 0 && i < totalSample / 2) {
                      BigDecimal sample = new BigDecimal(i);
-                     BigDecimal mean = sum.divide(sample, RoundingMode.HALF_UP);
-                     // series.add(sample, mean);
-                     DecimalFormat df = new DecimalFormat("0.#E0");
-                     System.out.println(df.format(mean));
+                     mean = sum.divide(sample, RoundingMode.HALF_UP);
+                     series.add(i, mean);
                   }
                }
                long endTime = System.currentTimeMillis();
-               long elapsedTime = endTime - startTime;
-               System.out.println("------------Total Elapsed Time: " + elapsedTime);
+               //
+               long lTime = startTime2 - startTime1;
+               long pTime = endTime - startTime2;
+               long tTime = lTime + pTime;
+               //
+               DecimalFormat df = new DecimalFormat("0.#E0");
+               System.out.println(df.format(mean)); 
+               System.out.println("------------Loading: " + lTime + " ms");
+               System.out.println("------------Processing: " + pTime + " ms");
+               System.out.println("------------Total: " + tTime + " ms");
                //-- Draw Chart --
-               // XYSeriesCollection dataset = new XYSeriesCollection(series);
-               // JFreeChart chart = ChartFactory.createXYLineChart(
-               //    "",
-               //    "Noise samples",
-               //    "S_N mean",
-               //    dataset,
-               //    PlotOrientation.VERTICAL,
-               //    true,
-               //    true,
-               //    false
-               // );
-               // chart.setBackgroundPaint(Color.white);
-               // XYPlot plot = (XYPlot) chart.getPlot();
-               // NumberAxis yAxis = (NumberAxis) plot.getRangeAxis();
-               // NumberFormat format = new DecimalFormat("0.#E0");
-               // yAxis.setNumberFormatOverride(format);
+               XYSeriesCollection dataset = new XYSeriesCollection(series);
+               JFreeChart chart = ChartFactory.createXYLineChart(
+                  "",
+                  "Noise samples",
+                  "S_N mean",
+                  dataset,
+                  PlotOrientation.VERTICAL,
+                  true,
+                  true,
+                  false
+               );
+               chart.setBackgroundPaint(Color.white);
+               XYPlot plot = (XYPlot) chart.getPlot();
+               NumberAxis yAxis = (NumberAxis) plot.getRangeAxis();
+               yAxis.setNumberFormatOverride(df);
                // yAxis.setRange(new Range(series.getMinY(), series.getMaxY()));
-               // ChartUtils.saveChartAsPNG(new File("Chart/" + file.getName() + "_line-chart.png"), chart, 1000, 500);
+               ChartUtils.saveChartAsPNG(new File("line-chart.png"), chart, 1000, 500);
             }
          }
       }

@@ -6,13 +6,14 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 public class NBLSolver {
    private int numVariables;
    private int numClauses;
    private List<Clause> instanceSAT;
    private HashMap<Integer, List<BigDecimal>> noisesByClause;
-   private HashMap<Integer, List<BigDecimal>> noisesByLiteral;
+   private Random random;
 
    public NBLSolver(File file) {
       try (BufferedReader br = new BufferedReader(new FileReader(file))) {
@@ -49,49 +50,35 @@ public class NBLSolver {
       }
    }
 
-   //-- NOISE SOURCES --
+   //-- NOISE SOURCE --
 
-   private void generateNoiseSource() {
-      noisesByClause = new HashMap<>(numClauses + 1, 1.0f);
-      noisesByLiteral = new HashMap<>(2 * numVariables + 1, 1.0f);
-      for (int i = 1; i <= numClauses; i++) {
-         for (int j = -numVariables; j <= numVariables; j++) {
-            if (j == 0) {
-               j = 1;
-            }
-            BigDecimal value = new BigDecimal(Math.random() - 0.5);
-            // group the noise source by clause index
-            List<BigDecimal> tempList1 = noisesByClause.get(i);
-            if (tempList1 == null) {
-               tempList1 = new ArrayList<>();
-               noisesByClause.put(i, tempList1);
-            }
-            tempList1.add(value);
-            // group the noise source by literal
-            List<BigDecimal> tempList2 = noisesByLiteral.get(j);
-            if (tempList2 == null) {
-               tempList2 = new ArrayList<>();
-               noisesByLiteral.put(j, tempList2);
-            }
-            tempList2.add(value);
-         }
-      }
+   private double noiseSource() {
+      return (random.nextDouble() * 2 - 1);
    }
 
    //-- TAU --
 
    private BigDecimal constructHyperspace() {
+      noisesByClause = new HashMap<>(numClauses + 1, 1.0f);
       BigDecimal result = BigDecimal.ONE;
       for (int i = 1; i <= numVariables; i++) {
          BigDecimal product1 = BigDecimal.ONE;
          BigDecimal product2 = BigDecimal.ONE;
-         List<BigDecimal> tempList = noisesByLiteral.get(i);
-         for (BigDecimal value : tempList) {
-            product1 = product1.multiply(value);
-         }
-         tempList = noisesByLiteral.get(-i);
-         for (BigDecimal value : tempList) {
-            product2 = product2.multiply(value);
+         for (int j = 1; j <= numClauses; j++) {
+            // Generate noise source for 2 literals of variable x in clause c
+            BigDecimal positive = BigDecimal.valueOf(noiseSource());
+            BigDecimal negative = BigDecimal.valueOf(noiseSource());
+            // Group the noise source by clause index
+            List<BigDecimal> tempList1 = noisesByClause.get(j);
+            if (tempList1 == null) {
+               tempList1 = new ArrayList<>();
+               noisesByClause.put(j, tempList1);
+            }
+            tempList1.add(positive);
+            tempList1.add(negative);
+            
+            product1 = product1.multiply(positive);
+            product2 = product2.multiply(negative);
          }
          result = result.multiply(product1.add(product2));
       }
@@ -115,17 +102,19 @@ public class NBLSolver {
    private BigDecimal cube(int clause, int literal) {
       List<BigDecimal> tempList = noisesByClause.get(clause);
       BigDecimal result = BigDecimal.ONE;
+      // Noise sources of each clause are listed by the order:
+      // [x1, -x1, x2, -x2, ...]
       for (int i = 0; i < numVariables; i++) {
-         if (literal < 0 && i == literal + numVariables) {
-            result = result.multiply(tempList.get(i));
+         if (literal < 0 && i + 1 == Math.abs(literal)) {
+            result = result.multiply(tempList.get(i * 2 + 1));
             continue;
-         } else if (literal > 0 && i == -literal + numVariables) {
-            result = result.multiply(tempList.get(literal - 1 + numVariables));
+         } else if (literal > 0 && i + 1 == literal) {
+            result = result.multiply(tempList.get(i * 2));
             continue;
          }
-         BigDecimal noise1 = tempList.get(i);
-         BigDecimal noise2 = tempList.get((2 * numVariables - 1) - i);
-         result = result.multiply(noise1.add(noise2));
+         BigDecimal positive = tempList.get(i * 2);
+         BigDecimal negative = tempList.get(i * 2 + 1);
+         result = result.multiply(positive.add(negative));
       }
       return result;
    }
@@ -133,9 +122,9 @@ public class NBLSolver {
    //-- CHECKER --
 
    public BigDecimal check() {
-      generateNoiseSource();
+      random = new Random();
       BigDecimal tau = constructHyperspace();
-      BigDecimal sigma = constructInstanceNBL();      
+      BigDecimal sigma = constructInstanceNBL();
       return tau.multiply(sigma);
    }
 }
