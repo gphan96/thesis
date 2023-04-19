@@ -2,5 +2,6 @@
    "java.project.referencedLibraries": [
       "lib/**/*.jar",
       "jfreechart-1.5.2.jar"
-   ]
+   ],
+   "java.saveActions.organizeImports": true
 }

@@ -3,6 +3,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,9 +15,11 @@ public class NBLSolver {
    private List<Clause> instanceSAT;
    private HashMap<Integer, List<Double>> noisesByClause;
    private Random random;
+   private String fileName;
 
    public NBLSolver(File file) {
       try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+         fileName = file.getName();
          String line;
          int clause_index = 1;
          while ((line = br.readLine()) != null) {
@@ -53,7 +56,7 @@ public class NBLSolver {
    //-- NOISE SOURCE --
 
    private double noiseSource() {
-      return (random.nextDouble() * 2 - 1);
+      return (random.nextDouble() * 1 - 0.5);
    }
 
    //-- TAU --
@@ -101,33 +104,69 @@ public class NBLSolver {
 
    private BigDecimal cube(int clause, int literal) {
       List<Double> tempList = noisesByClause.get(clause);
-      double result = 1.0;
+      BigDecimal result = BigDecimal.ONE;
       // Noise sources of each clause are listed by the order:
       // [x1, -x1, x2, -x2, ...]
       for (int i = 0; i < numVariables; i++) {
          if (literal < 0 && i + 1 == Math.abs(literal)) {
             double noise = tempList.get(i * 2 + 1);
-            result *= noise;
+            result = result.multiply(BigDecimal.valueOf(noise));
             continue;
          } else if (literal > 0 && i + 1 == literal) {
             double noise = tempList.get(i * 2);
-            result *= noise;
+            result = result.multiply(BigDecimal.valueOf(noise));
             continue;
          }
          double positive = tempList.get(i * 2);
          double negative = tempList.get(i * 2 + 1);
          double sum = positive + negative;
-         result *= sum;
+         result = result.multiply(BigDecimal.valueOf(sum));
       }
-      return BigDecimal.valueOf(result);
+      return result;
    }
 
    //-- CHECKER --
 
-   public BigDecimal check() {
-      random = new Random();
-      BigDecimal tau = constructHyperspace();
-      BigDecimal sigma = constructInstanceNBL();
-      return tau.multiply(sigma);
+   public boolean check() {
+      boolean satifiability = true;
+      BigDecimal S_N = BigDecimal.ZERO;
+      List<BigDecimal> meanList = new ArrayList<>();
+
+      int totalSample = 1000000;
+      int step = 10;
+
+      for (int i = 1; i <= totalSample; i++) {
+         random = new Random();
+         BigDecimal tau = constructHyperspace();
+         BigDecimal sigma = constructInstanceNBL();
+         S_N = S_N.add(tau.multiply(sigma));
+         if (i % step == 0) {
+            BigDecimal sample = new BigDecimal(i);
+            BigDecimal mean = S_N.divide(sample, MathContext.DECIMAL128);
+            meanList.add(mean);
+         }
+      }
+
+      // int numMean = meanList.size();
+
+      // BigDecimal sum = BigDecimal.ZERO;
+      // for (int i = 0; i < numMean; i++) {
+      //    sum = sum.add(meanList.get(i));
+      // }
+      // BigDecimal total_mean = sum.divide(new BigDecimal(numMean), MathContext.DECIMAL128);
+
+      // Scale up all the mean value to draw the line chart
+      // int numDigits = total_mean.precision();
+      // int numTrailingZeros = total_mean.scale();
+      // int numLeadingDigits = numTrailingZeros - numDigits + 1;
+      // System.out.println(numLeadingDigits);
+      // for (int i = 0; i < numMean; i++) {
+      //    BigDecimal mean = meanList.get(i);
+      //    meanList.set(i, mean.multiply(BigDecimal.TEN.pow(numLeadingDigits)));
+      // }
+
+      new Chart(meanList, fileName);
+      return satifiability;
    }
+
 }
