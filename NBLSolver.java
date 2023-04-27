@@ -3,7 +3,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,7 +13,7 @@ public class NBLSolver {
    private int numVariables;
    private int numClauses;
    private List<Clause> instanceSAT;
-   private HashMap<Integer, List<Double>> noisesByClause;
+   private HashMap<Integer, List<BigDecimal>> noisesByClause;
    private Random random;
    private String fileName;
 
@@ -55,8 +55,8 @@ public class NBLSolver {
 
    //-- NOISE SOURCE --
 
-   private double noiseSource() {
-      return (random.nextDouble() * 1 - 0.5);
+   private BigDecimal noiseSource() {
+      return new BigDecimal(random.nextDouble() * 1 - 0.5);
    }
 
    //-- TAU --
@@ -69,10 +69,10 @@ public class NBLSolver {
          BigDecimal product2 = BigDecimal.ONE;
          for (int j = 1; j <= numClauses; j++) {
             // Generate noise source for 2 literals of variable x in clause c
-            double positive = noiseSource();
-            double negative = noiseSource();
+            BigDecimal positive = noiseSource();
+            BigDecimal negative = noiseSource();
             // Group the noise source by clause index
-            List<Double> tempList1 = noisesByClause.get(j);
+            List<BigDecimal> tempList1 = noisesByClause.get(j);
             if (tempList1 == null) {
                tempList1 = new ArrayList<>();
                noisesByClause.put(j, tempList1);
@@ -80,8 +80,8 @@ public class NBLSolver {
             tempList1.add(positive);
             tempList1.add(negative);
             
-            product1 = product1.multiply(BigDecimal.valueOf(positive));
-            product2 = product2.multiply(BigDecimal.valueOf(negative));
+            product1 = product1.multiply(positive);
+            product2 = product2.multiply(negative);
          }
          result = result.multiply(product1.add(product2));
       }
@@ -103,24 +103,23 @@ public class NBLSolver {
    }
 
    private BigDecimal cube(int clause, int literal) {
-      List<Double> tempList = noisesByClause.get(clause);
+      List<BigDecimal> tempList = noisesByClause.get(clause);
       BigDecimal result = BigDecimal.ONE;
       // Noise sources of each clause are listed by the order:
       // [x1, -x1, x2, -x2, ...]
       for (int i = 0; i < numVariables; i++) {
          if (literal < 0 && i + 1 == Math.abs(literal)) {
-            double noise = tempList.get(i * 2 + 1);
-            result = result.multiply(BigDecimal.valueOf(noise));
+            BigDecimal noise = tempList.get(i * 2 + 1);
+            result = result.multiply(noise);
             continue;
          } else if (literal > 0 && i + 1 == literal) {
-            double noise = tempList.get(i * 2);
-            result = result.multiply(BigDecimal.valueOf(noise));
+            BigDecimal noise = tempList.get(i * 2);
+            result = result.multiply(noise);
             continue;
          }
-         double positive = tempList.get(i * 2);
-         double negative = tempList.get(i * 2 + 1);
-         double sum = positive + negative;
-         result = result.multiply(BigDecimal.valueOf(sum));
+         BigDecimal positive = tempList.get(i * 2);
+         BigDecimal negative = tempList.get(i * 2 + 1);
+         result = result.multiply(positive.add(negative));
       }
       return result;
    }
@@ -140,30 +139,12 @@ public class NBLSolver {
          BigDecimal tau = constructHyperspace();
          BigDecimal sigma = constructInstanceNBL();
          S_N = S_N.add(tau.multiply(sigma));
+         BigDecimal sample = new BigDecimal(i);
+         BigDecimal mean = S_N.divide(sample, RoundingMode.HALF_UP);
          if (i % step == 0) {
-            BigDecimal sample = new BigDecimal(i);
-            BigDecimal mean = S_N.divide(sample, MathContext.DECIMAL128);
             meanList.add(mean);
          }
       }
-
-      // int numMean = meanList.size();
-
-      // BigDecimal sum = BigDecimal.ZERO;
-      // for (int i = 0; i < numMean; i++) {
-      //    sum = sum.add(meanList.get(i));
-      // }
-      // BigDecimal total_mean = sum.divide(new BigDecimal(numMean), MathContext.DECIMAL128);
-
-      // Scale up all the mean value to draw the line chart
-      // int numDigits = total_mean.precision();
-      // int numTrailingZeros = total_mean.scale();
-      // int numLeadingDigits = numTrailingZeros - numDigits + 1;
-      // System.out.println(numLeadingDigits);
-      // for (int i = 0; i < numMean; i++) {
-      //    BigDecimal mean = meanList.get(i);
-      //    meanList.set(i, mean.multiply(BigDecimal.TEN.pow(numLeadingDigits)));
-      // }
 
       new Chart(meanList, fileName);
       return satifiability;
