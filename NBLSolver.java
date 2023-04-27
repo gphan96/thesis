@@ -15,6 +15,7 @@ public class NBLSolver {
    private HashMap<Integer, List<Double>> noisesByClause;
    private Random random;
    private String fileName;
+   private Utilities utils;
 
    public NBLSolver(File file) {
       try (BufferedReader br = new BufferedReader(new FileReader(file))) {
@@ -126,25 +127,40 @@ public class NBLSolver {
    //-- CHECKER --
 
    public boolean check() {
+      utils = new Utilities();
       boolean satifiability = true;
       double S_N = 0.0;
       List<Double> meanList = new ArrayList<>();
 
-      int totalSample = 1000000;
-      int step = 10;
+      int totalSample = 100000000;
+      int minSample = 100000;
 
       for (int i = 1; i <= totalSample; i++) {
          random = new Random();
          double tau = constructHyperspace();
          double sigma = constructInstanceNBL();
          S_N += (tau * sigma);
-         double mean = S_N / i;
-         if (i % step == 0) {
-            meanList.add(mean);
-         }
+         double meanCur = S_N / i;
+         meanList.add(meanCur);
+
+         if (i > minSample) {
+            int n = 5;
+            
+            // int numMean = meanList.size();
+            // List<Double> lastFive = meanList.subList(numMean - 5, numMean);
+
+            if (utils.checkStop(meanList, n)) {
+                System.out.println(meanCur);
+                System.out.println(i);
+                break;
+            }
+
+
+        }
       }
 
-      new Chart(meanList, fileName);
+      int step = 1;
+      new Chart(meanList, fileName, step);
       return satifiability;
    }
 

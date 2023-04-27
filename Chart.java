@@ -13,20 +13,23 @@ import org.jfree.data.xy.XYSeriesCollection;
 public class Chart {
    private final List<Double> meanList;
    private final String fileName;
+   private final int step;
    private XYSeries series;
    private XYSeriesCollection dataset;
    private JFreeChart chart;
 
-   public Chart(List<Double> meanList, String fileName) {
+   public Chart(List<Double> meanList, String fileName, int step) {
       this.meanList = meanList;
       this.fileName = fileName;
+      this.step = step;
       series = new XYSeries("Data Series");
       draw();
    }
    
    private void draw() {
-      for (double mean_value : meanList) {
-         series.add(meanList.indexOf(mean_value), mean_value);
+      for (int i = 0; i < meanList.size(); i += step) {
+         double mean_value = meanList.get(i);
+         series.add(i, mean_value);
       }
       dataset = new XYSeriesCollection(series);
       chart = ChartFactory.createXYLineChart(
