@@ -2,7 +2,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,7 +12,7 @@ public class NBLSolver {
    private int numVariables;
    private int numClauses;
    private List<Clause> instanceSAT;
-   private HashMap<Integer, List<BigDecimal>> noisesByClause;
+   private HashMap<Integer, List<Double>> noisesByClause;
    private Random random;
    private String fileName;
 
@@ -55,24 +54,24 @@ public class NBLSolver {
 
    //-- NOISE SOURCE --
 
-   private BigDecimal noiseSource() {
-      return new BigDecimal(random.nextDouble() * 1 - 0.5);
+   private double noiseSource() {
+      return random.nextDouble() * 1 - 0.5;
    }
 
    //-- TAU --
 
-   private BigDecimal constructHyperspace() {
+   private double constructHyperspace() {
       noisesByClause = new HashMap<>(numClauses + 1, 1.0f);
-      BigDecimal result = BigDecimal.ONE;
+      double result = 1.0;
       for (int i = 1; i <= numVariables; i++) {
-         BigDecimal product1 = BigDecimal.ONE;
-         BigDecimal product2 = BigDecimal.ONE;
+         double product1 = 1.0;
+         double product2 = 1.0;
          for (int j = 1; j <= numClauses; j++) {
             // Generate noise source for 2 literals of variable x in clause c
-            BigDecimal positive = noiseSource();
-            BigDecimal negative = noiseSource();
+            double positive = noiseSource();
+            double negative = noiseSource();
             // Group the noise source by clause index
-            List<BigDecimal> tempList1 = noisesByClause.get(j);
+            List<Double> tempList1 = noisesByClause.get(j);
             if (tempList1 == null) {
                tempList1 = new ArrayList<>();
                noisesByClause.put(j, tempList1);
@@ -80,46 +79,46 @@ public class NBLSolver {
             tempList1.add(positive);
             tempList1.add(negative);
             
-            product1 = product1.multiply(positive);
-            product2 = product2.multiply(negative);
+            product1 *= positive;
+            product2 *= negative;
          }
-         result = result.multiply(product1.add(product2));
+         result *= (product1 + product2);
       }
       return result;
    }
 
    //-- SIGMA --
 
-   private BigDecimal constructInstanceNBL() {
-      BigDecimal result = BigDecimal.ONE;
+   private double constructInstanceNBL() {
+      double result = 1.0;
       for (Clause clause : instanceSAT) {
-         BigDecimal sum = BigDecimal.ZERO;
+         double sum = 0.0;
          for (int literal : clause.getLiterals()) {
-            sum = sum.add(cube(clause.getIndex(), literal));
+            sum += cube(clause.getIndex(), literal);
          }
-         result = result.multiply(sum);
+         result *= sum;
       }
       return result;
    }
 
-   private BigDecimal cube(int clause, int literal) {
-      List<BigDecimal> tempList = noisesByClause.get(clause);
-      BigDecimal result = BigDecimal.ONE;
+   private double cube(int clause, int literal) {
+      List<Double> tempList = noisesByClause.get(clause);
+      double result = 1.0;
       // Noise sources of each clause are listed by the order:
       // [x1, -x1, x2, -x2, ...]
       for (int i = 0; i < numVariables; i++) {
          if (literal < 0 && i + 1 == Math.abs(literal)) {
-            BigDecimal noise = tempList.get(i * 2 + 1);
-            result = result.multiply(noise);
+            double noise = tempList.get(i * 2 + 1);
+            result *= noise;
             continue;
          } else if (literal > 0 && i + 1 == literal) {
-            BigDecimal noise = tempList.get(i * 2);
-            result = result.multiply(noise);
+            double noise = tempList.get(i * 2);
+            result *= noise;
             continue;
          }
-         BigDecimal positive = tempList.get(i * 2);
-         BigDecimal negative = tempList.get(i * 2 + 1);
-         result = result.multiply(positive.add(negative));
+         double positive = tempList.get(i * 2);
+         double negative = tempList.get(i * 2 + 1);
+         result *= (positive + negative);
       }
       return result;
    }
@@ -128,19 +127,18 @@ public class NBLSolver {
 
    public boolean check() {
       boolean satifiability = true;
-      BigDecimal S_N = BigDecimal.ZERO;
-      List<BigDecimal> meanList = new ArrayList<>();
+      double S_N = 0.0;
+      List<Double> meanList = new ArrayList<>();
 
       int totalSample = 1000000;
       int step = 10;
 
       for (int i = 1; i <= totalSample; i++) {
          random = new Random();
-         BigDecimal tau = constructHyperspace();
-         BigDecimal sigma = constructInstanceNBL();
-         S_N = S_N.add(tau.multiply(sigma));
-         BigDecimal sample = new BigDecimal(i);
-         BigDecimal mean = S_N.divide(sample, RoundingMode.HALF_UP);
+         double tau = constructHyperspace();
+         double sigma = constructInstanceNBL();
+         S_N += (tau * sigma);
+         double mean = S_N / i;
          if (i % step == 0) {
             meanList.add(mean);
          }
