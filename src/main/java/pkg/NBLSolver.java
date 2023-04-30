@@ -1,8 +1,9 @@
+package pkg;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -56,7 +57,7 @@ public class NBLSolver {
    //-- NOISE SOURCE --
 
    private double noiseSource() {
-      return random.nextDouble() * 1 - 0.5;
+      return random.nextDouble() * 2 - 1;
    }
 
    //-- TAU --
@@ -133,34 +134,41 @@ public class NBLSolver {
       List<Double> meanList = new ArrayList<>();
 
       int totalSample = 100000000;
-      int minSample = 100000;
+      int minSample = 2;
+      double meanCur = 0.0;
+      double meanPre = 0.0;
 
       for (int i = 1; i <= totalSample; i++) {
          random = new Random();
          double tau = constructHyperspace();
          double sigma = constructInstanceNBL();
          S_N += (tau * sigma);
-         double meanCur = S_N / i;
+         meanCur = S_N / i;
          meanList.add(meanCur);
-
          if (i > minSample) {
-            int n = 5;
-            
-            // int numMean = meanList.size();
-            // List<Double> lastFive = meanList.subList(numMean - 5, numMean);
+            double threshold = 1.0E-12;
 
-            if (utils.checkStop(meanList, n)) {
-                System.out.println(meanCur);
+            if (utils.checkStop(meanCur, meanPre, threshold)) {
                 System.out.println(i);
                 break;
             }
-
-
-        }
+         }
+         meanPre = meanCur;
       }
 
-      int step = 1;
-      new Chart(meanList, fileName, step);
+      double meanMax = utils.getMaxAbs(meanList);
+      System.out.println("Max:                     " + meanMax);
+      double tolerance = meanMax * 0.01;
+
+      double totalMean = utils.getMean(meanList);
+      System.out.println("Total Mean:                 " + totalMean);
+
+      if (Math.abs(totalMean) < tolerance) {
+         satifiability = false;
+      }
+
+      int step = 100;
+      new Chart(meanList, totalMean, tolerance, fileName, step);
       return satifiability;
    }
 

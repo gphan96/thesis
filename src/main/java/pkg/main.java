@@ -1,3 +1,5 @@
+package pkg;
+
 import java.io.File;
 
 public class main {
