@@ -1,3 +1,5 @@
+package pkg;
+
 import java.io.File;
 
 public class main {
@@ -13,10 +15,12 @@ public class main {
                long startTime1 = System.currentTimeMillis();
                NBLSolver solver = new NBLSolver(file);
                long startTime2 = System.currentTimeMillis();
-               if (solver.check()) {
-                  System.out.println("satisfiable");
-               } else {
-                  System.out.println("unsatisfiable");
+               for (int i = 0; i < 1; i++) {
+                  if (solver.check()) {
+                     System.out.println("satisfiable");
+                  } else {
+                     // System.out.println("unsatisfiable");
+                  }
                }
                long endTime = System.currentTimeMillis();
                //-- Elapsed time --

@@ -1,3 +1,5 @@
+package pkg;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -16,6 +18,7 @@ public class NBLSolver {
    private HashMap<Integer, List<BigDecimal>> noisesByClause;
    private Random random;
    private String fileName;
+   private Utilities utils;
 
    public NBLSolver(File file) {
       try (BufferedReader br = new BufferedReader(new FileReader(file))) {
@@ -56,7 +59,7 @@ public class NBLSolver {
    //-- NOISE SOURCE --
 
    private BigDecimal noiseSource() {
-      return new BigDecimal(random.nextDouble() * 1 - 0.5);
+      return BigDecimal.valueOf(random.nextDouble() * 2 - 1);
    }
 
    //-- TAU --
@@ -127,26 +130,42 @@ public class NBLSolver {
    //-- CHECKER --
 
    public boolean check() {
+      utils = new Utilities();
       boolean satifiability = true;
       BigDecimal S_N = BigDecimal.ZERO;
       List<BigDecimal> meanList = new ArrayList<>();
 
-      int totalSample = 1000000;
-      int step = 10;
+      int totalSample = 100000000;
+      BigDecimal meanPre = BigDecimal.ZERO;
 
       for (int i = 1; i <= totalSample; i++) {
          random = new Random();
          BigDecimal tau = constructHyperspace();
          BigDecimal sigma = constructInstanceNBL();
          S_N = S_N.add(tau.multiply(sigma));
-         BigDecimal sample = new BigDecimal(i);
-         BigDecimal mean = S_N.divide(sample, RoundingMode.HALF_UP);
-         if (i % step == 0) {
-            meanList.add(mean);
+         BigDecimal meanCur = S_N.divide(BigDecimal.valueOf(i), RoundingMode.HALF_UP);
+         meanList.add(meanCur);
+
+         int threshold = 12;
+         if (utils.checkStop(meanCur, meanPre, threshold)) {
+             System.out.println(i);
+             break;
          }
+         meanPre = meanCur;
       }
 
-      new Chart(meanList, fileName);
+      BigDecimal meanMax = utils.getMaxAbs(meanList);
+      BigDecimal tolerance = meanMax.multiply(BigDecimal.valueOf(0.01));
+      BigDecimal totalMean = utils.getMean(meanList);
+      // System.out.println("Max:               " + meanMax);
+      // System.out.println("Total Mean:        " + totalMean);
+
+      if (totalMean.abs().compareTo(tolerance) <= 0) {
+         satifiability = false;
+      }
+
+      int step = 1000;
+      new Chart(meanList, totalMean, tolerance, fileName, step);
       return satifiability;
    }
 
