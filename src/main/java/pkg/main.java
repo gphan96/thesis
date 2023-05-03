@@ -1,10 +1,14 @@
 package pkg;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 
 public class main {
    
-   public static void main(String[] args) {
+   public static void main(String[] args) throws IOException {
       File dir = new File("SATInstances");
       File[] files = dir.listFiles();
       if (files != null) {
@@ -16,10 +20,16 @@ public class main {
                NBLSolver solver = new NBLSolver(file);
                long startTime2 = System.currentTimeMillis();
                for (int i = 0; i < 1; i++) {
-                  if (solver.check()) {
+                  FileOutputStream fos = new FileOutputStream("Logs/log_" + file.getName() + ".txt");
+                  PrintStream ps = new PrintStream(fos);
+                  System.setOut(ps);
+                  boolean satifiability = solver.check();                  
+                  ps.close();
+                  fos.close();
+                  if (satifiability) {
                      System.out.println("satisfiable");
                   } else {
-                     // System.out.println("unsatisfiable");
+                     System.out.println("unsatisfiable");
                   }
                }
                long endTime = System.currentTimeMillis();

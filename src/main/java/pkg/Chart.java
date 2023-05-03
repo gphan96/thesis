@@ -20,18 +20,16 @@ public class Chart {
    private final List<BigDecimal> meanList;
    private final String fileName;
    private final int step;
-   private final BigDecimal totalMean;
-   private final BigDecimal tolerance;
+   private final int leadingZero;
    private XYSeries series;
    private XYSeriesCollection dataset;
    private JFreeChart chart;
 
-   public Chart(List<BigDecimal> meanList,BigDecimal totalMean,BigDecimal tolerance, String fileName, int step) {
+   public Chart(List<BigDecimal> meanList, int leadingZero, String fileName, int step) {
       this.meanList = meanList;
       this.fileName = fileName;
       this.step = step;
-      this.totalMean = totalMean;
-      this.tolerance = tolerance;
+      this.leadingZero = leadingZero;
       series = new XYSeries("Data Series");
       draw();
    }
@@ -42,13 +40,13 @@ public class Chart {
    
    private void draw() {
       for (int i = 0; i < meanList.size(); i += step) {
-         BigDecimal mean_value = meanList.get(i);
+         BigDecimal mean_value = meanList.get(i).movePointRight(leadingZero);
          // System.out.println(mean_value);
          series.add(i, mean_value);
       }
       dataset = new XYSeriesCollection(series);
       chart = ChartFactory.createXYLineChart(
-         "",
+         fileName,
          "Noise samples",
          "S_N mean",
          dataset,
@@ -57,28 +55,14 @@ public class Chart {
          true,
          false
       );
-      chart.setBackgroundPaint(Color.white);
-
-      BasicStroke markerStroke = new BasicStroke(1.1f);
-
-      ValueMarker marker1 = new ValueMarker(totalMean.doubleValue());
-      marker1.setPaint(Color.blue);
-      marker1.setStroke(markerStroke);
-      ValueMarker marker2 = new ValueMarker(tolerance.doubleValue());
-      marker2.setPaint(Color.black);
-      marker2.setStroke(markerStroke);
-      ValueMarker marker3 = new ValueMarker(- tolerance.doubleValue());
-      marker3.setPaint(Color.black);
-      marker3.setStroke(markerStroke);
 
       XYPlot plot = (XYPlot) chart.getPlot();
-
-      plot.addRangeMarker(marker1);
-      plot.addRangeMarker(marker2);
-      plot.addRangeMarker(marker3);
+      plot.setBackgroundPaint(Color.WHITE);
+      plot.setRangeGridlinePaint(Color.GRAY);
+      plot.setDomainGridlinePaint(Color.GRAY);
       
       try {
-         ChartUtils.saveChartAsPNG(new File("Chart/" + fileName + "_line-chart.png"), chart, 1000, 500);
+         ChartUtils.saveChartAsPNG(new File("Charts/" + fileName + "_line-chart.png"), chart, 1000, 500);
       } catch (IOException e) {
          System.err.println("Failed to draw chart: " + fileName);
          e.printStackTrace();

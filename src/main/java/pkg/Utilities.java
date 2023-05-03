@@ -19,7 +19,7 @@ public class Utilities {
         return false;
     }
 
-    private int getLeadingZero(BigDecimal value) {
+    public int getLeadingZero(BigDecimal value) {
         int numDigits = value.precision();
         int numTrailingZeros = value.scale();
         return numTrailingZeros - numDigits + 1;

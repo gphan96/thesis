@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,9 +17,9 @@ public class NBLSolver {
    private int numClauses;
    private List<Clause> instanceSAT;
    private HashMap<Integer, List<BigDecimal>> noisesByClause;
-   private Random random;
    private String fileName;
    private Utilities utils;
+   private DecimalFormat df;
 
    public NBLSolver(File file) {
       try (BufferedReader br = new BufferedReader(new FileReader(file))) {
@@ -59,7 +60,7 @@ public class NBLSolver {
    //-- NOISE SOURCE --
 
    private BigDecimal noiseSource() {
-      return BigDecimal.valueOf(random.nextDouble() * 2 - 1);
+      return BigDecimal.valueOf(Math.random() * 1 - 0.5);
    }
 
    //-- TAU --
@@ -131,41 +132,49 @@ public class NBLSolver {
 
    public boolean check() {
       utils = new Utilities();
+      df = new DecimalFormat("0.#####E0");
       boolean satifiability = true;
       BigDecimal S_N = BigDecimal.ZERO;
       List<BigDecimal> meanList = new ArrayList<>();
 
-      int totalSample = 100000000;
+      int totalSample = 5000;
+      int minSample = totalSample - 50000;
       BigDecimal meanPre = BigDecimal.ZERO;
 
       for (int i = 1; i <= totalSample; i++) {
-         random = new Random();
          BigDecimal tau = constructHyperspace();
          BigDecimal sigma = constructInstanceNBL();
-         S_N = S_N.add(tau.multiply(sigma));
+         BigDecimal product = tau.multiply(sigma);
+         S_N = S_N.add(product);
          BigDecimal meanCur = S_N.divide(BigDecimal.valueOf(i), RoundingMode.HALF_UP);
-         meanList.add(meanCur);
-
-         int threshold = 12;
-         if (utils.checkStop(meanCur, meanPre, threshold)) {
-             System.out.println(i);
-             break;
+         if (i > 0) {
+            meanList.add(meanCur);
          }
-         meanPre = meanCur;
+         System.out.println(i + " :---: " + df.format(product));
+
+         // int threshold = 12;
+         // if (utils.checkStop(meanCur, meanPre, threshold)) {
+         //     System.out.println(i);
+         //     break;
+         // }
+         // meanPre = meanCur;
       }
 
-      BigDecimal meanMax = utils.getMaxAbs(meanList);
-      BigDecimal tolerance = meanMax.multiply(BigDecimal.valueOf(0.01));
-      BigDecimal totalMean = utils.getMean(meanList);
-      // System.out.println("Max:               " + meanMax);
-      // System.out.println("Total Mean:        " + totalMean);
+      // BigDecimal meanMax = utils.getMaxAbs(meanList);
+      // BigDecimal tolerance = meanMax.multiply(BigDecimal.valueOf(0.01));
+      // BigDecimal totalMean = utils.getMean(meanList);
+      // // System.out.println("Max:               " + meanMax);
+      // // System.out.println("Total Mean:        " + totalMean);
 
-      if (totalMean.abs().compareTo(tolerance) <= 0) {
-         satifiability = false;
-      }
+      // if (totalMean.abs().compareTo(tolerance) <= 0) {
+      //    satifiability = false;
+      // }
 
-      int step = 1000;
-      new Chart(meanList, totalMean, tolerance, fileName, step);
+      BigDecimal lastMean = meanList.get(totalSample - 1);
+      int leadingZero = utils.getLeadingZero(lastMean);
+
+      int step = 1;
+      new Chart(meanList, leadingZero, fileName, step);
       return satifiability;
    }
 
