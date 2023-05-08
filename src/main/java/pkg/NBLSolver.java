@@ -60,7 +60,7 @@ public class NBLSolver {
    //-- NOISE SOURCE --
 
    private BigDecimal noiseSource() {
-      return BigDecimal.valueOf(Math.random() * 1 - 0.5);
+      return utils.setPrecision(new BigDecimal(Math.random() * 2 - 1));
    }
 
    //-- TAU --
@@ -84,12 +84,13 @@ public class NBLSolver {
             tempList1.add(positive);
             tempList1.add(negative);
             
-            product1 = product1.multiply(positive);
-            product2 = product2.multiply(negative);
+            product1 = utils.setPrecision(product1).multiply(positive);
+            product2 = utils.setPrecision(product2).multiply(negative);
          }
-         result = result.multiply(product1.add(product2));
+         BigDecimal sum = product1.add(product2);
+         result = utils.setPrecision(result).multiply(sum);
       }
-      return result;
+      return utils.setPrecision(result);
    }
 
    //-- SIGMA --
@@ -101,9 +102,9 @@ public class NBLSolver {
          for (int literal : clause.getLiterals()) {
             sum = sum.add(cube(clause.getIndex(), literal));
          }
-         result = result.multiply(sum);
+         result = utils.setPrecision(result).multiply(sum);
       }
-      return result;
+      return utils.setPrecision(result);
    }
 
    private BigDecimal cube(int clause, int literal) {
@@ -123,41 +124,45 @@ public class NBLSolver {
          }
          BigDecimal positive = tempList.get(i * 2);
          BigDecimal negative = tempList.get(i * 2 + 1);
-         result = result.multiply(positive.add(negative));
+         BigDecimal sum = positive.add(negative);
+         result = utils.setPrecision(result).multiply(utils.setPrecision(sum));
       }
-      return result;
+      return utils.setPrecision(result);
    }
 
    //-- CHECKER --
 
-   public boolean check() {
+   public List<BigDecimal> check() {
       utils = new Utilities();
-      df = new DecimalFormat("0.#####E0");
+      df = new DecimalFormat("0.###############E0");
       boolean satifiability = true;
-      BigDecimal S_N = BigDecimal.ZERO;
+      BigDecimal sum = BigDecimal.ZERO;
       List<BigDecimal> meanList = new ArrayList<>();
 
-      int totalSample = 5000;
-      int minSample = totalSample - 50000;
+      int totalSample = 200000;
+      int minSample = 15000;
       BigDecimal meanPre = BigDecimal.ZERO;
 
       for (int i = 1; i <= totalSample; i++) {
          BigDecimal tau = constructHyperspace();
          BigDecimal sigma = constructInstanceNBL();
-         BigDecimal product = tau.multiply(sigma);
-         S_N = S_N.add(product);
-         BigDecimal meanCur = S_N.divide(BigDecimal.valueOf(i), RoundingMode.HALF_UP);
-         if (i > 0) {
-            meanList.add(meanCur);
+         BigDecimal S_N = tau.multiply(sigma);
+         sum = sum.add(utils.setPrecision(S_N));
+         BigDecimal meanCur = utils.setPrecision(sum.divide(BigDecimal.valueOf(i), RoundingMode.HALF_UP));
+         meanList.add(meanCur);
+         if (i > totalSample - 200000) {
+            System.out.println(i + " :: " + meanCur);
+         //    // System.out.println(i + " :: " + df.format(product));
          }
-         System.out.println(i + " :---: " + df.format(product));
-
-         // int threshold = 12;
-         // if (utils.checkStop(meanCur, meanPre, threshold)) {
-         //     System.out.println(i);
-         //     break;
+         
+         // if (i > minSample) {
+         //    int threshold = 5;
+         //    if (utils.checkStop(meanCur, meanPre, threshold)) {
+         //        System.out.println("Stop at: " + i);
+         //        break;
+         //    }
+         //    meanPre = meanCur;
          // }
-         // meanPre = meanCur;
       }
 
       // BigDecimal meanMax = utils.getMaxAbs(meanList);
@@ -170,12 +175,6 @@ public class NBLSolver {
       //    satifiability = false;
       // }
 
-      BigDecimal lastMean = meanList.get(totalSample - 1);
-      int leadingZero = utils.getLeadingZero(lastMean);
-
-      int step = 1;
-      new Chart(meanList, leadingZero, fileName, step);
-      return satifiability;
+      return meanList;
    }
-
 }

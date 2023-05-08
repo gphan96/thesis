@@ -2,49 +2,41 @@ package pkg;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.math.BigDecimal;
 import java.util.List;
 
+import javax.imageio.ImageIO;
+
+import org.apache.batik.dom.GenericDOMImplementation;
+import org.apache.batik.svggen.SVGGraphics2D;
 import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.NumberTickUnit;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.w3c.dom.DOMImplementation;
+import org.w3c.dom.Document;
 
 public class Chart {
-   private final List<BigDecimal> meanList;
-   private final String fileName;
-   private final int step;
-   private final int leadingZero;
-   private XYSeries series;
    private XYSeriesCollection dataset;
    private JFreeChart chart;
+   private XYPlot plot;
 
-   public Chart(List<BigDecimal> meanList, int leadingZero, String fileName, int step) {
-      this.meanList = meanList;
-      this.fileName = fileName;
-      this.step = step;
-      this.leadingZero = leadingZero;
-      series = new XYSeries("Data Series");
-      draw();
-   }
-
-   private void scale() {
-
-   }
-   
-   private void draw() {
-      for (int i = 0; i < meanList.size(); i += step) {
-         BigDecimal mean_value = meanList.get(i).movePointRight(leadingZero);
-         // System.out.println(mean_value);
-         series.add(i, mean_value);
-      }
-      dataset = new XYSeriesCollection(series);
+   public Chart(String fileName, double minRange, double maxRange, double tickUnit) {
+      dataset = new XYSeriesCollection();
       chart = ChartFactory.createXYLineChart(
          fileName,
          "Noise samples",
@@ -55,17 +47,84 @@ public class Chart {
          true,
          false
       );
-
-      XYPlot plot = (XYPlot) chart.getPlot();
+      plot = (XYPlot) chart.getPlot();
       plot.setBackgroundPaint(Color.WHITE);
       plot.setRangeGridlinePaint(Color.GRAY);
       plot.setDomainGridlinePaint(Color.GRAY);
-      
+      XYItemRenderer renderer = plot.getRenderer();
+      renderer.setSeriesPaint(0, Color.blue);
+
+      NumberAxis yAxis = (NumberAxis) plot.getRangeAxis();
+      // yAxis.setRange(minRange, maxRange);
+      yAxis.setTickUnit(new NumberTickUnit(tickUnit));
+   }
+
+   public void addSeries(List<BigDecimal> meanList, int leadingZero, int step, String fileName) {
+      XYSeries series = new XYSeries(fileName);
+      for (int i = 0; i < meanList.size(); i += step) {
+         BigDecimal mean_value = meanList.get(i).movePointRight(leadingZero);
+         series.add(i, mean_value);
+      }
+      dataset.addSeries(series);
+   }
+
+   public void modifySerieOne(int delta) {
+      XYSeries serieOne = dataset.getSeries(0);
+      int countSerieOne = serieOne.getItemCount();
+      for (int i = 0; i < countSerieOne; i++) {
+         BigDecimal value = ((BigDecimal) serieOne.getY(i)).movePointRight(delta);
+         serieOne.updateByIndex(i, value);
+      }
+   }
+
+   public void addMarker(double value, Color color) {
+      ValueMarker marker = new ValueMarker(value);
+      BasicStroke markerStroke = new BasicStroke(1.1f);
+      marker.setPaint(color);
+      marker.setStroke(markerStroke);
+      plot.addRangeMarker(marker);
+   }
+   
+   public void drawToFile(int delta) {
       try {
-         ChartUtils.saveChartAsPNG(new File("Charts/" + fileName + "_line-chart.png"), chart, 1000, 500);
+         int width = 1024;
+         int height = 1024;
+         File file = new File("Charts/" + delta + "_chart.png");
+         BufferedImage image = chart.createBufferedImage(width, height);
+         ImageIO.write(image, "png", file);
+         // ChartUtils.saveChartAsPNG(new File("Charts/" + index + "_line-chart.png"), chart, width, height);
       } catch (IOException e) {
-         System.err.println("Failed to draw chart: " + fileName);
+         System.err.println("Failed to draw chart");
          e.printStackTrace();
+      }
+   }
+
+   public void setTitle(String title) {
+      chart.setTitle(title);
+   }
+
+   public void drawToSVG(int delta) {
+      DOMImplementation domImpl = GenericDOMImplementation.getDOMImplementation();
+      Document document = domImpl.createDocument(null, "svg", null);
+      // Create an instance of SVGGraphics2D
+      SVGGraphics2D svgGenerator = new SVGGraphics2D(document);
+
+      // Render the chart as SVG
+      int width = 512;
+      int height = 512;
+      Rectangle2D chartArea = new Rectangle2D.Double(0, 0, width, height);
+      chart.draw(svgGenerator, chartArea);
+
+      // Export the SVG as a file
+      File svgFile = new File("Charts/chart_" + delta + ".svg");
+      try (OutputStream outputStream = new FileOutputStream(svgFile)) {
+         Writer out = new OutputStreamWriter(outputStream, "UTF-8");
+         svgGenerator.stream(out, true /* useCss */);
+         outputStream.flush();
+         outputStream.close();
+      } catch (IOException e) {
+         System.err.println("Failed to draw chart");
+          e.printStackTrace();
       }
    }
 }

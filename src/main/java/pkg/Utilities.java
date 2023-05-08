@@ -2,10 +2,10 @@ package pkg;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.List;
 
 public class Utilities {
-   
 
     public Utilities() {
     }
@@ -25,8 +25,8 @@ public class Utilities {
         return numTrailingZeros - numDigits + 1;
     }
 
-    private BigDecimal getNewScale(BigDecimal value) {
-        int n = 20; // Number of desire significant digit
+    public BigDecimal setPrecision(BigDecimal value) {
+        int n = 20; // Desired number of precision
         int newScale = n - value.precision() + value.scale();
         return value.setScale(newScale, RoundingMode.HALF_UP);
     }
