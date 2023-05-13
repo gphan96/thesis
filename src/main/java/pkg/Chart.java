@@ -25,6 +25,8 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
+import org.jfree.chart.ui.RectangleAnchor;
+import org.jfree.chart.ui.TextAnchor;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.w3c.dom.DOMImplementation;
@@ -52,11 +54,11 @@ public class Chart {
       plot.setRangeGridlinePaint(Color.GRAY);
       plot.setDomainGridlinePaint(Color.GRAY);
       XYItemRenderer renderer = plot.getRenderer();
-      renderer.setSeriesPaint(0, Color.blue);
+      renderer.setSeriesPaint(1, Color.BLUE);
 
-      NumberAxis yAxis = (NumberAxis) plot.getRangeAxis();
+      // NumberAxis yAxis = (NumberAxis) plot.getRangeAxis();
       // yAxis.setRange(minRange, maxRange);
-      yAxis.setTickUnit(new NumberTickUnit(tickUnit));
+      // yAxis.setTickUnit(new NumberTickUnit(tickUnit));
    }
 
    public void addSeries(List<BigDecimal> meanList, int leadingZero, int step, String fileName) {
@@ -77,19 +79,29 @@ public class Chart {
       }
    }
 
-   public void addMarker(double value, Color color) {
+   public void addMarker(String label, double value, Color color, TextAnchor anchor) {
       ValueMarker marker = new ValueMarker(value);
+      marker.setLabel(label);
+      marker.setLabelAnchor(RectangleAnchor.RIGHT);
+      marker.setLabelTextAnchor(anchor);
       BasicStroke markerStroke = new BasicStroke(1.1f);
       marker.setPaint(color);
       marker.setStroke(markerStroke);
       plot.addRangeMarker(marker);
    }
+
+   public void setTitle(String title) {
+      chart.setTitle(title);
+   }
    
-   public void drawToFile(int delta) {
+   public void drawToFile(String name) {
       try {
-         int width = 1024;
-         int height = 1024;
-         File file = new File("Charts/" + delta + "_chart.png");
+         int width = 512;
+         int height = 512;
+         File file = new File("Charts/" + name + "_chart.png");
+         if (!file.getParentFile().exists()) {
+            file.getParentFile().mkdirs();
+         }
          BufferedImage image = chart.createBufferedImage(width, height);
          ImageIO.write(image, "png", file);
          // ChartUtils.saveChartAsPNG(new File("Charts/" + index + "_line-chart.png"), chart, width, height);
@@ -97,10 +109,6 @@ public class Chart {
          System.err.println("Failed to draw chart");
          e.printStackTrace();
       }
-   }
-
-   public void setTitle(String title) {
-      chart.setTitle(title);
    }
 
    public void drawToSVG(int delta) {

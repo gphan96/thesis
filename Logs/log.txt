@@ -1,0 +1,10 @@
+---------- Execution 1 ----------
+
+File:       unsat-4-10.cnf
+Leading Zero:      16
+Tolerance:         0.68667553585230531698
+
+Processing: 660348 ms
+---------- End of 1 ----------
+
+

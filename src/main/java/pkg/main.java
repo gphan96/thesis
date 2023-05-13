@@ -14,51 +14,49 @@ public class main {
       File dir = new File("SATInstances");
       File[] files = dir.listFiles();
       if (files != null) {
+         FileOutputStream fos = new FileOutputStream("Logs/log.txt");
+         PrintStream ps = new PrintStream(fos);
+         System.setOut(ps);
          for (int i = 1; i <= 1; i++) {
+            System.out.println("---------- Execution " + i + " ----------");
             List<BigDecimal> meanList;
             Utilities utils = new Utilities();
-            Chart lineChart1 = new Chart("", 1,1,1);
+            Chart lineChart = new Chart("", -5,5,1);
             int step = 1;
-            int leadingZero = 0;
-            int delta = 0;
+            int preLeadingZero = 0;
+            long startTime = System.currentTimeMillis();
             for (File file : files) {
-               FileOutputStream fos = new FileOutputStream("Logs/log_" + file.getName() + ".txt");
-               PrintStream ps = new PrintStream(fos);
-               System.setOut(ps);
                if (file.isFile() && file.getName().endsWith(".cnf")) {
+                  System.out.println("\nFile:       " + file.getName());
                   //-- Execution --
-                  long startTime1 = System.currentTimeMillis();
                   NBLSolver solver = new NBLSolver(file);
-                  long startTime2 = System.currentTimeMillis();
-                  meanList = solver.check();
-                  long endTime = System.currentTimeMillis();
+                  solver.check(i);
+                  // meanList = solver.check();
+                  // BigDecimal lastMean = meanList.get(meanList.size() - 1);
+                  // int leadingZero = utils.getLeadingZero(lastMean);
+                  // if (preLeadingZero != 0) {
+                  //    lineChart.addSeries(meanList, preLeadingZero, step, file.getName());
+                  // } else {
+                  //    lineChart.addSeries(meanList, leadingZero, step, file.getName());
+                  // }
 
-                  System.out.println("--------------");
-                  BigDecimal lastMean = meanList.get(meanList.size() - 1);
-                  int tempLeadingZero = utils.getLeadingZero(lastMean);
-                  delta = tempLeadingZero - leadingZero;
-                  leadingZero = (leadingZero < tempLeadingZero) ? tempLeadingZero : leadingZero;
-                  lineChart1.addSeries(meanList, leadingZero, step, file.getName());
-
-                  //-- Elapsed time --
-                  long lTime = startTime2 - startTime1;
-                  long pTime = endTime - startTime2;
-                  long tTime = lTime + pTime;
-
-                  System.out.println("Leading Zero :: " + tempLeadingZero);
-                  System.out.println("------------Loading: " + lTime + " ms");
-                  System.out.println("------------Processing: " + pTime + " ms");
-                  System.out.println("------------Total: " + tTime + " ms");
+                  // System.out.println("LZ:         " + leadingZero);
+                  // System.out.println("Pre LZ:     " + preLeadingZero);
+                  
+                  // preLeadingZero = leadingZero;
                }
             }
-            if (delta > 0) {
-               lineChart1.modifySerieOne(delta);
-            }
+            long endTime = System.currentTimeMillis();
+            long pTime = endTime - startTime;
+            System.out.println("\nProcessing: " + pTime + " ms");
+            System.out.println("---------- End of " + i + " ----------\n\n");
+            // if (delta > 0) {
+            //    lineChart1.modifySerieOne(delta);
+            // }
 
-            lineChart1.addMarker(0, Color.BLACK);
-            lineChart1.setTitle("Delta of Leading Zero: " + delta);
-            lineChart1.drawToFile(delta);
-            lineChart1.drawToSVG(delta);
+            // lineChart.addMarker(0, Color.BLACK);
+            // lineChart.drawToFile("" + i);
+            // lineChart1.drawToSVG(delta);
          }
       }
    }

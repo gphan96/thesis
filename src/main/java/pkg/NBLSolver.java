@@ -1,5 +1,6 @@
 package pkg;
 
+import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -8,9 +9,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
+
+import org.jfree.chart.ui.TextAnchor;
 
 public class NBLSolver {
    private int numVariables;
@@ -132,15 +135,15 @@ public class NBLSolver {
 
    //-- CHECKER --
 
-   public List<BigDecimal> check() {
+   public boolean check(int index) {
       utils = new Utilities();
       df = new DecimalFormat("0.###############E0");
       boolean satifiability = true;
       BigDecimal sum = BigDecimal.ZERO;
       List<BigDecimal> meanList = new ArrayList<>();
 
-      int totalSample = 200000;
-      int minSample = 15000;
+      int totalSample = 5000000;
+      int minSample = 20000;
       BigDecimal meanPre = BigDecimal.ZERO;
 
       for (int i = 1; i <= totalSample; i++) {
@@ -149,32 +152,56 @@ public class NBLSolver {
          BigDecimal S_N = tau.multiply(sigma);
          sum = sum.add(utils.setPrecision(S_N));
          BigDecimal meanCur = utils.setPrecision(sum.divide(BigDecimal.valueOf(i), RoundingMode.HALF_UP));
-         meanList.add(meanCur);
-         if (i > totalSample - 200000) {
-            System.out.println(i + " :: " + meanCur);
-         //    // System.out.println(i + " :: " + df.format(product));
+         if (i > totalSample - 2000000) {
+            meanList.add(meanCur);
+            // System.out.println(i + " :: " + meanCur);
+            // System.out.println(i + " :: " + df.format(product));
          }
          
          // if (i > minSample) {
-         //    int threshold = 5;
+         //    int threshold = 8;
          //    if (utils.checkStop(meanCur, meanPre, threshold)) {
-         //        System.out.println("Stop at: " + i);
+         //        System.out.println("Stop at:    " + i);
          //        break;
          //    }
          //    meanPre = meanCur;
          // }
       }
 
-      // BigDecimal meanMax = utils.getMaxAbs(meanList);
-      // BigDecimal tolerance = meanMax.multiply(BigDecimal.valueOf(0.01));
-      // BigDecimal totalMean = utils.getMean(meanList);
-      // // System.out.println("Max:               " + meanMax);
-      // // System.out.println("Total Mean:        " + totalMean);
+      int num = meanList.size();
+      BigDecimal lastMean = meanList.get(num - 1);
+      int leadingZero = utils.getLeadingZero(lastMean);
 
-      // if (totalMean.abs().compareTo(tolerance) <= 0) {
+      // List<BigDecimal> lastHalf = meanList.subList(num / 2, num);
+      // BigDecimal lastMax = Collections.max(lastHalf);
+      // BigDecimal lastMin = Collections.min(lastHalf);
+      BigDecimal meanMax = utils.getMaxAbs(meanList);
+      BigDecimal tolerance = meanMax.multiply(BigDecimal.valueOf(0.1)).movePointRight(leadingZero);
+      
+      Chart lineChart = new Chart(fileName, -5, 5, 1);
+      lineChart.addSeries(meanList, leadingZero, 1, "");
+      // lineChart.addMarker("Max", lastMax.doubleValue(), Color.BLUE, TextAnchor.BOTTOM_RIGHT);
+      // lineChart.addMarker("Min", lastMin.doubleValue(), Color.BLUE, TextAnchor.TOP_RIGHT);
+
+      // lineChart.addMarker("Last", lastMean.doubleValue(), Color.BLUE, TextAnchor.BOTTOM_RIGHT);
+      lineChart.addMarker("Threshold", tolerance.doubleValue(), Color.BLACK, TextAnchor.BOTTOM_RIGHT);
+      lineChart.addMarker("Threshold", - tolerance.doubleValue(), Color.BLACK, TextAnchor.TOP_RIGHT);
+      lineChart.drawToFile(fileName + "/" + index);
+      
+      System.out.println("Leading Zero:      " + leadingZero);
+      // System.out.println("Last max:          " + lastMax);
+      // System.out.println("Last min:          " + lastMin);
+      System.out.println("Tolerance:         " + tolerance);
+      
+      // if ((lastMax.abs().compareTo(tolerance) <= 0) || (lastMin.abs().compareTo(tolerance) <= 0) || (lastMin.compareTo(BigDecimal.valueOf(- tolerance.doubleValue())) <= 0 && tolerance.compareTo(lastMax) <= 0)) {
       //    satifiability = false;
       // }
 
-      return meanList;
+      // if (lastMean.abs().compareTo(tolerance) <= 0) {
+      //    satifiability = false;
+      // }
+
+      // System.out.println("Satifiable?        " + satifiability);
+      return satifiability;
    }
 }
