@@ -1,10 +1,200 @@
 ---------- Execution 1 ----------
 
-File:       unsat-4-10.cnf
-Leading Zero:      16
-Tolerance:         0.68667553585230531698
+File:       sat.cnf
+Stop at:    210394
+Tolerance:         0.000042560970668682765640
+Slope:             -2.7304011880497647E-9
+Intercept:         0.0014743019070986973
+Satifiable?        true
 
-Processing: 660348 ms
+File:       unsat.cnf
+Stop at:    207610
+Tolerance:         0.000017788906522466037272
+Slope:             -1.1572342947812655E-9
+Intercept:         6.366267369973241E-5
+Satifiable?        true
+
+Processing: 28119 ms
 ---------- End of 1 ----------
+
+
+---------- Execution 2 ----------
+
+File:       sat.cnf
+Stop at:    215417
+Tolerance:         0.000054791142133559867963
+Slope:             3.1645783498668093E-10
+Intercept:         0.0011750419414260193
+Satifiable?        true
+
+File:       unsat.cnf
+Stop at:    299730
+Tolerance:         0.00031787056128896676035
+Slope:             -1.6448804635190074E-10
+Intercept:         5.732139680235927E-5
+Satifiable?        true
+
+Processing: 25840 ms
+---------- End of 2 ----------
+
+
+---------- Execution 3 ----------
+
+File:       sat.cnf
+Stop at:    205430
+Tolerance:         0.000076732799764096401208
+Slope:             -1.71153330234966E-9
+Intercept:         0.0014247314240173165
+Satifiable?        true
+
+File:       unsat.cnf
+Stop at:    274094
+Tolerance:         0.00015078640480131190994
+Slope:             7.061729311678501E-10
+Intercept:         3.506785186924311E-5
+Satifiable?        true
+
+Processing: 22237 ms
+---------- End of 3 ----------
+
+
+---------- Execution 4 ----------
+
+File:       sat.cnf
+Stop at:    319440
+Tolerance:         0.000057443330836521197030
+Slope:             -7.474430448312492E-10
+Intercept:         0.0013835356028688048
+Satifiable?        true
+
+File:       unsat.cnf
+Stop at:    220786
+Tolerance:         0.000085312296723014011562
+Slope:             -4.539781630126392E-10
+Intercept:         -1.583476803349125E-4
+Satifiable?        true
+
+Processing: 23785 ms
+---------- End of 4 ----------
+
+
+---------- Execution 5 ----------
+
+File:       sat.cnf
+Stop at:    371390
+Tolerance:         0.000015718183953784901469
+Slope:             7.475092486487689E-11
+Intercept:         0.0010953987189611446
+Satifiable?        true
+
+File:       unsat.cnf
+Stop at:    341880
+Tolerance:         0.00063515404727420487989
+Slope:             -1.5993767764191575E-10
+Intercept:         1.2790856281615601E-5
+Satifiable?        true
+
+Processing: 22296 ms
+---------- End of 5 ----------
+
+
+---------- Execution 6 ----------
+
+File:       sat.cnf
+Stop at:    362460
+Tolerance:         0.000020530495788247025450
+Slope:             3.2477511627546044E-10
+Intercept:         0.0011498918526800875
+Satifiable?        true
+
+File:       unsat.cnf
+Stop at:    229068
+Tolerance:         0.00011080014023822917289
+Slope:             -1.0343301810132384E-9
+Intercept:         1.2353435135401057E-4
+Satifiable?        true
+
+Processing: 20305 ms
+---------- End of 6 ----------
+
+
+---------- Execution 7 ----------
+
+File:       sat.cnf
+Stop at:    207240
+Tolerance:         0.000060173018986777678132
+Slope:             7.474311333056321E-10
+Intercept:         0.0010719351725319622
+Satifiable?        true
+
+File:       unsat.cnf
+Stop at:    293216
+Tolerance:         0.000028256414091155779340
+Slope:             -3.8184572025478196E-10
+Intercept:         3.827811624835452E-5
+Satifiable?        true
+
+Processing: 14062 ms
+---------- End of 7 ----------
+
+
+---------- Execution 8 ----------
+
+File:       sat.cnf
+Stop at:    200519
+Tolerance:         0.00010414779996545442377
+Slope:             -2.0405863218547085E-9
+Intercept:         0.0013753546543765352
+Satifiable?        true
+
+File:       unsat.cnf
+Stop at:    285651
+Tolerance:         0.000043685570852793864126
+Slope:             -5.960921354115757E-10
+Intercept:         -1.7515472643069675E-5
+Satifiable?        true
+
+Processing: 21349 ms
+---------- End of 8 ----------
+
+
+---------- Execution 9 ----------
+
+File:       sat.cnf
+Stop at:    206649
+Tolerance:         0.000039835328422716583219
+Slope:             6.358860010304125E-10
+Intercept:         0.0013043441540385105
+Satifiable?        true
+
+File:       unsat.cnf
+Stop at:    297161
+Tolerance:         0.000059352037375651755524
+Slope:             5.267281476453836E-10
+Intercept:         -1.076096616324273E-5
+Satifiable?        true
+
+Processing: 24729 ms
+---------- End of 9 ----------
+
+
+---------- Execution 10 ----------
+
+File:       sat.cnf
+Stop at:    230594
+Tolerance:         0.000070377765103529349789
+Slope:             3.0912625668795923E-9
+Intercept:         0.0011473065992942259
+Satifiable?        true
+
+File:       unsat.cnf
+Stop at:    335705
+Tolerance:         0.000054691384470619448124
+Slope:             -2.2207235956497856E-10
+Intercept:         1.1710649309006069E-4
+Satifiable?        true
+
+Processing: 26227 ms
+---------- End of 10 ----------
 
 

@@ -27,6 +27,7 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.ui.RectangleAnchor;
 import org.jfree.chart.ui.TextAnchor;
+import org.jfree.data.statistics.Regression;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.w3c.dom.DOMImplementation;
@@ -56,8 +57,8 @@ public class Chart {
       XYItemRenderer renderer = plot.getRenderer();
       renderer.setSeriesPaint(1, Color.BLUE);
 
-      // NumberAxis yAxis = (NumberAxis) plot.getRangeAxis();
-      // yAxis.setRange(minRange, maxRange);
+      NumberAxis yAxis = (NumberAxis) plot.getRangeAxis();
+      yAxis.setRange(minRange, maxRange);
       // yAxis.setTickUnit(new NumberTickUnit(tickUnit));
    }
 
@@ -68,6 +69,13 @@ public class Chart {
          series.add(i, mean_value);
       }
       dataset.addSeries(series);
+   }
+
+   public void addRegression(double slope, double intercept, int leadingZero, int start, int end) {
+      XYSeries trend = new XYSeries("Trend");
+      trend.add(start, (slope * start + intercept) * Math.pow(10, leadingZero));
+      trend.add(end, (slope * end + intercept) * Math.pow(10, leadingZero));
+      dataset.addSeries(trend);
    }
 
    public void modifySerieOne(int delta) {

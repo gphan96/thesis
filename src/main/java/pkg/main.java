@@ -17,7 +17,7 @@ public class main {
          FileOutputStream fos = new FileOutputStream("Logs/log.txt");
          PrintStream ps = new PrintStream(fos);
          System.setOut(ps);
-         for (int i = 1; i <= 1; i++) {
+         for (int i = 1; i <= 10; i++) {
             System.out.println("---------- Execution " + i + " ----------");
             List<BigDecimal> meanList;
             Utilities utils = new Utilities();
