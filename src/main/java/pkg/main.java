@@ -17,14 +17,14 @@ public class main {
          FileOutputStream fos = new FileOutputStream("Logs/log.txt");
          PrintStream ps = new PrintStream(fos);
          System.setOut(ps);
-         for (int i = 1; i <= 10; i++) {
-            System.out.println("---------- Execution " + i + " ----------");
-            List<BigDecimal> meanList;
-            Utilities utils = new Utilities();
-            Chart lineChart = new Chart("", -5,5,1);
-            int step = 1;
-            int preLeadingZero = 0;
-            long startTime = System.currentTimeMillis();
+         for (int i = 1; i <= 1; i++) {
+            // System.out.println("---------- Execution " + i + " ----------");
+            // List<BigDecimal> meanList;
+            // Utilities utils = new Utilities();
+            // Chart lineChart = new Chart("", -5,5,1);
+            // int step = 1;
+            // int preLeadingZero = 0;
+            // long startTime = System.currentTimeMillis();
             for (File file : files) {
                if (file.isFile() && file.getName().endsWith(".cnf")) {
                   System.out.println("\nFile:       " + file.getName());
@@ -46,10 +46,10 @@ public class main {
                   // preLeadingZero = leadingZero;
                }
             }
-            long endTime = System.currentTimeMillis();
-            long pTime = endTime - startTime;
-            System.out.println("\nProcessing: " + pTime + " ms");
-            System.out.println("---------- End of " + i + " ----------\n\n");
+            // long endTime = System.currentTimeMillis();
+            // long pTime = endTime - startTime;
+            // System.out.println("\nProcessing: " + pTime + " ms");
+            // System.out.println("---------- End of " + i + " ----------\n\n");
             // if (delta > 0) {
             //    lineChart1.modifySerieOne(delta);
             // }

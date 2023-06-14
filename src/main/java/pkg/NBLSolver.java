@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.jfree.chart.ui.TextAnchor;
@@ -64,7 +65,9 @@ public class NBLSolver {
    //-- NOISE SOURCE --
 
    private BigDecimal noiseSource() {
-      return utils.setPrecision(new BigDecimal(Math.random() * 2 - 1));
+      Random random = new Random();
+      return BigDecimal.valueOf(random.nextInt(2001) - 1000);
+      // return utils.setPrecision(new BigDecimal(Math.random() * 2 - 1));
    }
 
    //-- TAU --
@@ -146,21 +149,30 @@ public class NBLSolver {
       int totalSample = 100000000;
       int minSample = 200000;
 
-      SimpleRegression regression = new SimpleRegression();
-
       for (int i = 1; i <= totalSample; i++) {
          BigDecimal tau = constructHyperspace();
          BigDecimal sigma = constructInstanceNBL();
          BigDecimal S_N = tau.multiply(sigma);
-         sum = sum.add(utils.setPrecision(S_N));
+         // listS.add(S_N);
          BigDecimal meanCur = utils.setPrecision(sum.divide(BigDecimal.valueOf(i), RoundingMode.HALF_UP));
-         meanList.add(meanCur);
-         // if (i > totalSample / 2) {
-            // System.out.println(i + " :: " + meanCur);
-            // System.out.println(i + " :: " + df.format(product));
-         //    regression.addData(i, meanCur.doubleValue());
-         // }
+
+         // -- Print the extreme data
+         if (S_N.abs().compareTo(meanCur.abs().multiply(BigDecimal.valueOf(1000000))) > 0 && i > 2) {
+            System.out.println(meanCur);
+            System.out.println(S_N);
+            // for (int k = 1; k <= numClauses; k++) {
+            //    System.out.println(noisesByClause.get(k));
+            // }
+            // continue; // ignore the extreme value
+         }
          
+         sum = sum.add(S_N);
+         meanCur = utils.setPrecision(sum.divide(BigDecimal.valueOf(i), RoundingMode.HALF_UP));
+         meanList.add(meanCur);
+         
+         
+         // -- Stopping criterion
+
          if (i > minSample) {
             int threshold = 10;
             if (utils.checkStop(meanCur, meanPre, threshold)) {
@@ -170,49 +182,48 @@ public class NBLSolver {
             meanPre = meanCur;
          }
       }
+      
+
+      // -- SAT criterion --
 
       int num = meanList.size();
       // BigDecimal lastMean = meanList.get(num - 1);
-      // int leadingZero = utils.getLeadingZero(lastMean);
-      int leadingZero = 0;
 
       List<BigDecimal> lastHalf = meanList.subList(num / 2, num);
-      for (int i = 0; i < lastHalf.size() - 1; i++) {
-         regression.addData(i, lastHalf.get(i).doubleValue());
-      }
-      double slope = regression.getSlope();
-      double intercept = regression.getIntercept();
-      // BigDecimal lastMax = Collections.max(lastHalf);
-      // BigDecimal lastMin = Collections.min(lastHalf);
+      BigDecimal lastMax = Collections.max(lastHalf);
+      BigDecimal lastMin = Collections.min(lastHalf);
       BigDecimal meanMax = utils.getMaxAbs(meanList);
-      BigDecimal tolerance = meanMax.multiply(BigDecimal.valueOf(0.01)).movePointRight(leadingZero);
-      
-      Chart lineChart = new Chart(fileName, -0.0005, 0.002, 1);
-      lineChart.addSeries(meanList, leadingZero, 1, "");
-      lineChart.addRegression(slope, intercept, leadingZero, 0, num);
+      BigDecimal tolerance = meanMax.multiply(BigDecimal.valueOf(0.01));
+
+      // -- check collision with second half
+      if ((lastMax.abs().compareTo(tolerance) <= 0) || (lastMin.abs().compareTo(tolerance) <= 0) || (lastMin.compareTo(BigDecimal.valueOf(- tolerance.doubleValue())) <= 0 && tolerance.compareTo(lastMax) <= 0)) {
+         satifiability = false;
+      }
+
+      // -- check collision with last value of S_N mean
+      // if (lastMean.abs().compareTo(tolerance) <= 0) {
+      //    satifiability = false;
+      // }
+
+
+      // -- Plot print --
+
+      // Chart lineChart = new Chart(fileName, -0.0005, 0.002, 1);
+      // lineChart.addSeries(meanList, 0, 1, "");
 
       // lineChart.addMarker("Max", lastMax.doubleValue(), Color.BLUE, TextAnchor.BOTTOM_RIGHT);
       // lineChart.addMarker("Min", lastMin.doubleValue(), Color.BLUE, TextAnchor.TOP_RIGHT);
       // lineChart.addMarker("Last", lastMean.doubleValue(), Color.BLUE, TextAnchor.BOTTOM_RIGHT);
-      lineChart.addMarker("Threshold", tolerance.doubleValue(), Color.BLACK, TextAnchor.BOTTOM_RIGHT);
-      lineChart.addMarker("Threshold", - tolerance.doubleValue(), Color.BLACK, TextAnchor.TOP_RIGHT);
+      // lineChart.addMarker("Threshold", tolerance.doubleValue(), Color.BLACK, TextAnchor.BOTTOM_RIGHT);
+      // lineChart.addMarker("Threshold", - tolerance.doubleValue(), Color.BLACK, TextAnchor.TOP_RIGHT);
 
-      lineChart.drawToFile(fileName + "/" + index);
+      // lineChart.drawToFile(fileName + "/" + index);
       
       // System.out.println("Leading Zero:      " + leadingZero);
       // System.out.println("Last max:          " + lastMax);
       // System.out.println("Last min:          " + lastMin);
-      System.out.println("Tolerance:         " + tolerance);
-      System.out.println("Slope:             " + slope);
-      System.out.println("Intercept:         " + intercept);
-      
-      // if ((lastMax.abs().compareTo(tolerance) <= 0) || (lastMin.abs().compareTo(tolerance) <= 0) || (lastMin.compareTo(BigDecimal.valueOf(- tolerance.doubleValue())) <= 0 && tolerance.compareTo(lastMax) <= 0)) {
-      //    satifiability = false;
-      // }
+      // System.out.println("Tolerance:         " + tolerance);
 
-      // if (lastMean.abs().compareTo(tolerance) <= 0) {
-      //    satifiability = false;
-      // }
 
       System.out.println("Satifiable?        " + satifiability);
       return satifiability;

@@ -57,8 +57,8 @@ public class Chart {
       XYItemRenderer renderer = plot.getRenderer();
       renderer.setSeriesPaint(1, Color.BLUE);
 
-      NumberAxis yAxis = (NumberAxis) plot.getRangeAxis();
-      yAxis.setRange(minRange, maxRange);
+      // NumberAxis yAxis = (NumberAxis) plot.getRangeAxis();
+      // yAxis.setRange(minRange, maxRange);
       // yAxis.setTickUnit(new NumberTickUnit(tickUnit));
    }
 
